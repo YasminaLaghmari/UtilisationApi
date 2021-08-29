@@ -9,44 +9,32 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using UtilisationApi.Models;
-using UtilisationApi.ModelView;
+
 
 namespace UtilisationApi.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ClientController : ControllerBase
+    
+    public class ClientController : Controller
     {
-        private readonly IConfiguration _Config;
-        private string URLBase
+        
+        public  IActionResult GetAll()
         {
-            get
+            string re = "";
+            string URL = "https://localhost:44396/api/Client";
+            using (var client = new HttpClient())
             {
-                return _Config.GetSection("BaseURL").GetSection("URL").Value;
-            }
-        }
-        public ClientController(IConfiguration Config)
-        {
-            _Config = Config;
-        }
-       
+                var responseTask = client.GetAsync(URL);
+                responseTask.Wait();
 
-        public async Task<IActionResult> AddClient()
-        {
-            var clientview = new Client();
-            List<ClientModel> clientList = new List<ClientModel>();
-
-            using (var httpClient = new HttpClient())
-            {
-                using (var respense = await httpClient.GetAsync(URLBase + "Client"))
+                HttpResponseMessage result = responseTask.Result;
+                if (result.IsSuccessStatusCode)
                 {
-                    string apiResponse = await respense.Content.ReadAsStringAsync();
-
-                    clientList = JsonConvert.DeserializeObject<List<ClientModel>>(apiResponse);
+                    re =  result.Content.ReadAsStringAsync().Result;
                 }
             }
-            clientview = new SelectList(clientList, "Nom", "Prenom");
-            return (IActionResult)clientview;
+            var f = JsonConvert.DeserializeObject<ClientModel[]>(re);
+
+            return View(f);
 
         }
 
